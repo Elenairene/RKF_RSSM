@@ -13,7 +13,7 @@ Oficial code dataset and model weights for Rethinking the Key Factors for the Ge
 ## Datasets 
 We employ the [US3D-Track2](https://github.com/pubgeo/dfc2019), [WHU-Stereo](https://github.com/Sheng029/WHU-Stereo), and the following self-made datasets:
 
-* SV-all & SV-bj: In the provided archive, SV-all is named "SVtrain". Users should downsample SV-all to ensure its training volume matches SV-bj (located in the "bj1" folder), despite SV-all covering all cities.
+* SV-all & SV-bj: In the provided archive, SV-all contains 5 subsets called bj1, bj2, ss, zh, jl. Users should downsample SV-all to ensure its training volume matches SV-bj (located in the "bj1" folder), despite SV-all covering all cities.
 * Testset: Includes sd, hw (named "zzg" in the archive), and omh.
 
-Dataset Download Link: [HuggingFace]
+Dataset Download Link: [HuggingFace](https://huggingface.co/datasets/LitingJiang/RKF_RSSM_dataset/tree/main)
