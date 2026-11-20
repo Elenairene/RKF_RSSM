@@ -1,0 +1,30 @@
+name: ckpt-relay3
+on:
+  push:
+    branches: [relay3-tmp]
+permissions:
+  contents: write
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_REPO: Elenairene/RKF_RSSM
+    steps:
+      - name: Install gdown
+        run: pip install -q gdown
+      - name: Download VAD-Tiny ckpt
+        run: |
+          for i in 1 2 3; do
+            gdown "https://drive.google.com/uc?id=1KgCC_wFqPH0CQqdr6Pp2smBX5ARPaqne" -O vad_tiny.pth && break
+            echo "retry $i"; sleep 20
+          done
+          test -s vad_tiny.pth
+      - name: Checksum
+        run: md5sum vad_tiny.pth | tee checksums.md5
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create relay3-ckpt vad_tiny.pth --target relay3-tmp \
+            --title "vad tiny relay (temp)" --notes "VAD-Tiny. $(cat checksums.md5)"
