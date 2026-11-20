@@ -1,0 +1,58 @@
+name: ckpt-relay2
+on:
+  push:
+    branches: [relay2-tmp]
+permissions:
+  contents: write
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_REPO: Elenairene/RKF_RSSM
+    steps:
+      - name: Install gdown
+        run: pip install -q gdown
+      - name: List GenAD datasets folder
+        run: |
+          python - <<'EOF'
+          import re, urllib.request
+          url = "https://drive.google.com/embeddedfolderview?id=1gy7Ux-bk0sge77CsGgeEzPF9ImVn-WgJ#list"
+          html = urllib.request.urlopen(url, timeout=60).read().decode('utf-8','ignore')
+          entries = re.findall(r'<div class="flip-entry" id="entry-([\w-]+)".*?<div class="flip-entry-title">([^<]*)</div>', html, re.S)
+          print("GenAD datasets folder:", entries)
+          open('genad_folder.txt','w').write(repr(entries))
+          EOF
+      - name: Download VAD author val pkl
+        run: |
+          for i in 1 2 3; do
+            gdown "https://drive.google.com/uc?id=16DZeA-iepMCaeyi57XSXL3vYyhrOQI9S" -O vad_author_val.pkl && break
+            echo "retry $i"; sleep 20
+          done
+          test -s vad_author_val.pkl
+      - name: Download GenAD val pkl (if any in their folder)
+        run: |
+          python - <<'EOF'
+          entries = eval(open('genad_folder.txt').read())
+          cands = [i for i, t in entries if 'val' in t.lower() and t.strip().endswith('.pkl')]
+          open('genad_val_id.txt','w').write(cands[0] if cands else '')
+          print("GenAD val candidates:", cands)
+          EOF
+          ID=$(cat genad_val_id.txt)
+          if [ -n "$ID" ]; then
+            for i in 1 2 3; do
+              gdown "https://drive.google.com/uc?id=$ID" -O genad_author_val.pkl && break
+              echo "retry $i"; sleep 20
+            done
+          fi
+      - name: Checksums
+        run: |
+          ls -la *.pkl
+          md5sum *.pkl | tee checksums.md5
+      - name: Create release with assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create relay2-ckpt $(ls *.pkl) --target relay2-tmp \
+            --title "pkls relay (temp)" \
+            --notes "Author VAD/GenAD val pkls relay. $(cat checksums.md5)"
